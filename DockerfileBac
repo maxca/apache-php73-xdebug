@@ -1,0 +1,58 @@
+# PHPUnit Docker Container.
+FROM debian:stable-slim
+MAINTAINER Samark Chisanguan <samarkchnsgn@gmail.com>
+
+# Run some Debian packages installation.
+ENV PACKAGES="php-pear curl"
+RUN apt-get update && \
+    apt-get install -yq --no-install-recommends $PACKAGES
+
+
+# Run php installation.
+#RUN apt-get install php7
+
+# Run xdebug installation.
+RUN mkdir  -p /usr/src/php/ext/
+RUN curl -L http://pecl.php.net/get/xdebug-2.4.0.tgz >> /usr/src/php/ext/xdebug.tgz && \
+    tar -xf /usr/src/php/ext/xdebug.tgz -C /usr/src/php/ext/
+#    rm /usr/src/php/ext/xdebug.tgz && \
+#    docker-php-ext-install xdebug-2.4.0 && \
+#    docker-php-ext-install pcntl && \
+#    docker-php-ext-install exif && \
+#    php -m
+
+# Run apache installation.
+RUN apt-cache search apache
+RUN apt-get install -y apache2 apache2-bin apache2-data
+
+## Goto temporary directory.
+#WORKDIR /var/www/html
+#
+## Set up the application directory.
+#VOLUME ["/var/www/html"]
+#WORKDIR /var/www/html
+
+RUN which apachectl
+RUN echo "ServerName localhost" >> /etc/apache2/apache2.conf && \
+     apachectl configtest
+
+RUN a2enmod rewrite && mkdir /bootstrap
+
+ADD start.sh /bootstrap/start.sh
+RUN chmod 755 /bootstrap/start.sh && chown -R www-data:www-data /var/www/html
+
+# Expose port
+EXPOSE 80 8080 443
+
+
+COPY apache-foreground /usr/sbin/
+
+CMD ["/bin/sh -c ls -alh"]
+
+
+
+
+# Set up the command arguments.
+#ENTRYPOINT ["/usr/sbin/apachectl","start"]
+#CMD ["--help"]
+
